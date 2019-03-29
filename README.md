@@ -1,2 +1,3 @@
-# CS284A_CG_Project3-2
-UC Berkeley Computer Graphics Project 3-2
+# Assignment 3: PathTracer
+
+http://462cmu.github.io/asst3_pathtracer/
