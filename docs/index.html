@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>  
+    div.padded {  
+      padding-top: 0px;  
+      padding-right: 100px;  
+      padding-bottom: 0.25in;  
+      padding-left: 100px;  
+    }  
+  </style> 
+<title>George Zhang  |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+<br />
+<h1 align="middle">Assignment 3-2: PathTracer 2</h1>
+    <h2 align="middle">George Zhang</h2>
+
+    <div class="padded">
+		<p>In this project, I rendered mirror, glass, and microfacet materials, explored environment lighting, and implemented a thin-lens camera model to demonstrate depth of field.</p>
+        <p>Machine used: Thinkpad T470p.</p>
+
+    <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+        <p>Settings used: -t 8 -s 256 -l 4 -m XXX -r 480 360 (except the last image, which used -s 1024).</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/p1a.png" width="480px" />
+                    <figcaption align="middle">m = 0 (0 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p1b.png" width="480px" />
+                    <figcaption align="middle">m = 1 (27 sec)</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/p1c.png" width="480px" />
+                    <figcaption align="middle">m = 2 (67 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p1d.png" width="480px" />
+                    <figcaption align="middle">m = 3 (99 sec)</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/p1e.png" width="480px" />
+                    <figcaption align="middle">m = 4 (129 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p1f.png" width="480px" />
+                    <figcaption align="middle">m = 5 (147 sec)</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/p1g.png" width="480px" />
+                    <figcaption align="middle">m = 100 (245 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p1h.png" width="480px" />
+                    <figcaption align="middle">s = 1024, m = 100 (758 sec)</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>m = 0: Only the light source is seen by the camera.</p>
+        <p>m = 1: The camera only sees one light bounce meaning that only diffuse (walls) are rendered.</p>
+        <p>m = 2: The camera now sees two light bounces meaning that light can reflect off of reflective surfaces and hit the light source, thus reflective surfaces can be seen by the camera. Glass objects will not be rendered clearly due to insufficient bounces being unable to capture transmission/refraction. Of course, diffuse is rendered fine, since we have more than one bounce.</p>
+        <p>m = 3: The camera now sees three light bounces meaning that light can now hit glass objects, refract twice, and hit the light source, thus the camera can now capture clear glass images.</p>
+        <p>m = 4: The camera can now capture a circle of light under the glass sphere. This is due to one reflection off the floor, two refractions in the glass sphere, and one hit on the light source.</p>
+        <p>m = 5: The camera can now capture a circle of light on the right blue wall as well as more light near the bottom of the glass sphere. This is due to one reflection off the right blue wall, three refractions in the glass sphere, and one hit on the light source.</p>
+        <p>m = 100: The max ray depth is increased so much that Russian Roulette will likely terminate the bouncing before the max ray depth is reached.</p>
+		
+	<h2 align="middle">Part 2: Microfacet Material</h2>
+		<p>For Part 2, in general, I used a Visual Studio command of the form: -t 8 -s 1024 -l 4 -m 100 -r 480 360 $(ProjectDir)..\dae\sky\CBdragon_microfacet_au.dae</p>
+        <p>Settings used: -t 8 -s 1024 -l 4 -m 100 -r 480 360 unless stated otherwise.</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/p2a1.png" width="480px" />
+                    <figcaption align="middle">α = 0.005 (602 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p2a2.png" width="480px" />
+                    <figcaption align="middle">α = 0.005, -s 65536 samples/pixel</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/p2b.png" width="480px" />
+                    <figcaption align="middle">α = 0.05 (748 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p2c.png" width="480px" />
+                    <figcaption align="middle">α = 0.25 (738 sec)</figcaption>
+                    <td align="middle">
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/p2d.png" width="480px" />
+                    <figcaption align="middle">α = 0.5 (604 sec)</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>As α of the object decreases, not only does the object appear shinier (smoother macro surface), but also more white specks appear. These white specs can be eliminated by increasing the -s parameter (samples/pixel). For α = 0.005, I increased the samples/pixel to 65536 to eliminate most of the white specks. The prominence of white specks is correlated with decreasing α, which suggests that decreasing α causes white specks. This may be due to the object being shinier (more reflective to light).</p>
+		
+        <p>Settings used: -t 8 -s 64 -l 1 -m 5 -r 480 360.</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/p2e.png" width="480px" />
+                    <figcaption align="middle">Cosine hemisphere sampling (22 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p2f.png" width="480px" />
+                    <figcaption align="middle">Importance sampling (23 sec)</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>Cosine hemisphere sampling produces a noisier image when compared to importance sampling. This causes parts of the bunny that would be otherwise bright when rendered using importance sampling to be dark when rendered using cosine hemisphere sampling. As mentioned in the project spec, the cosine hemisphere sampling provided for us is suitable for importance sampling diffuse BRDFs. However, this is not the case for microfacet BSDFs whose normal distribution function (NDF) can be defined using a Beckmann distribution.</p>
+		
+        <p>Settings used: -t 8 -s 1024 -l 4 -m 100 -r 480 360.</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/p2g.png" width="480px" />
+                    <figcaption align="middle">α = 0.005 (589 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p2h.png" width="480px" />
+                    <figcaption align="middle">α = 0.5 (688 sec)</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>Metal chosen: silver</p>
+        <p>According to https://refractiveindex.info/, for silver, the η and k values at 0.614 µm (red), 0.549 µm (green), and 0.466 µm (blue) are:</p>
+        <p>η = (0.059193, 0.059881, 0.047366)</p>
+		<p>k = (4.1283, 3.5892, 2.8132)</p>
+		
+		
+	<h2 align="middle">Part 3: Environment Light</h2>
+		<p>For Part 3, in general, I used a Visual Studio command of the form: -t 8 -s 4 -l 64 -e $(ProjectDir)../exr/field.exr $(ProjectDir)..\dae\sky\bunny_microfacet_cu_unlit.dae</p>
+		<p>In uniform sampling, a random direction (wi) is sampled from the sphere surrounding the hit point. Bilinear interpolation is then used to compute the radiance on this point from the sampled direction.</p>
+		<p>In importance sampling, sampling of wi is biased towards light sources (from which the radiance is comparatively large), thus hit areas with strong lighting will be less noisy, simple more wi samples come from the vicinity of light sources.</p>
+		<p>I modified CBempty.dae poorly by slightly decreasing count in ceiling-mesh-positions-array. This allowed me to see field.exr unblocked.</p>
+        <p>To normalize pdf_envmap, simply divide each value in pdf_envmap by sum. marginal_y stores the cumulative marginal distribution for y. Thus, we sum all values of pdf_envmap with the same y (varying x). I chose to also keep track of the (non-cumulative) marginal distribution for y in marginal_y0. marginal_y0 made calculating values for conds_y easy, since I could just divide by values in marginal_y0.</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/p3a1.png" width="480px" />
+                    <figcaption align="middle">field.exr for modified CBempty.dae</figcaption>
+                    <td align="middle">
+                    <img src="images/p3a2.png" width="480px" />
+                    <figcaption align="middle">Probability debug for field.exr</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>This matches the project spec.</p>
+		
+        <p>Settings used: -t 8 -s 4 -l 64.</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/p3b.png" width="480px" />
+                    <figcaption align="middle">Uniform sampling: CBbunny_unlit (17 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p3c.png" width="480px" />
+                    <figcaption align="middle">Importance sampling: CBbunny_unlit (16 sec)</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>Looking closely at both images, I see that the image generated by uniform sampling is slightly more noisy than that generated by importance sampling (black dots more prominent in uniformly sampled image).</p>
+		
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/p3d.png" width="480px" />
+                    <figcaption align="middle">Uniform sampling: CBbunny_microfacet_cu_unlit (18 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p3e.png" width="480px" />
+                    <figcaption align="middle">Importance sampling: CBbunny_microfacet_cu_unlit (17 sec)</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>Looking closely at both images, I see that the image generated by uniform sampling is slightly more noisy than that generated by importance sampling (black dots more prominent in uniformly sampled image, especially around the cheek, ear, and hind of the bunny).</p>
+		
+	<h2 align="middle">Part 4: Depth of Field</h2>
+		<p>For Part 4, in general, I used a Visual Studio command of the form: -t 8 -s 256 -l 4 -m 8 -b 0.125 -d 1.8 -c $(ProjectDir)..\dae\sky\CBdragon_cam_settings.txt $(ProjectDir)..\dae\sky\CBdragon.dae</p>
+        <p>Pinhole camera model vs. thin-lens camera model: The pinhole camera model has linear perspective, but does not involve focusing. The thin-lens camera model involves the Thin Lens equation, magnification, and depth of field. Moreover, a nonideal lens may not allow rays to converge perfectly. We can think of a pinhole camera as a thin-lens camera with zero aperture.</p>
+        <p>Settings used: -t 8 -s 256 -l 4 -m 8.</p>
+        <p>lensRadius fixed at 0.125.</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/p4a.png" width="480px" />
+                    <figcaption align="middle">focalDistance = 1.6 (747 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p4b.png" width="480px" />
+                    <figcaption align="middle">focalDistance = 1.8 (802 sec)</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/p4c.png" width="480px" />
+                    <figcaption align="middle">focalDistance = 2.0 (738 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p4d.png" width="480px" />
+                    <figcaption align="middle">focalDistance = 2.2 (734 sec)</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/p4e.png" width="480px" />
+                    <figcaption align="middle">focalDistance = 2.4 (720 sec)</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>As expected, with a fixed lensRadius of 0.125, as focalDistance is increased, the image appears focused at a further distance.</p>
+		
+        <p>Settings used: -t 8 -s 256 -l 4 -m 8.</p>
+        <p>focalDistance fixed at 1.8.</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/p4f.png" width="480px" />
+                    <figcaption align="middle">lensRadius = 0 (711 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p4g.png" width="480px" />
+                    <figcaption align="middle">lensRadius = 0.0625 (725 sec)</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/p4h.png" width="480px" />
+                    <figcaption align="middle">lensRadius = 0.125 (802 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p4i.png" width="480px" />
+                    <figcaption align="middle">lensRadius = 0.25 (739 sec)</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/p4j.png" width="480px" />
+                    <figcaption align="middle">lensRadius = 0.5 (753 sec)</figcaption>
+                    <td align="middle">
+                    <img src="images/p4k.png" width="480px" />
+                    <figcaption align="middle">lensRadius = 1 (777 sec)</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>As expected, with a fixed focalDistance of 1.8, as lensRadius is increased, the image appears blurrier, especially at further distances.</p>
+
+</div>
+</body>
+</html>
+
+
+
+
